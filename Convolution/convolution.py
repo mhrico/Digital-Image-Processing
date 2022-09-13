@@ -6,8 +6,8 @@ def convolve(src, kernel):
     output = np.zeros(src.shape, np.float64)
     src = cv2.copyMakeBorder(src, padding, padding, padding, padding, cv2.BORDER_REPLICATE)
 
-    for i in range(padding, output.shape[0] + padding):
-        for j in range(padding, output.shape[1] + padding):
+    for i in range(padding, src.shape[0] - padding):
+        for j in range(padding, src.shape[1] - padding):
             temp = src[i-padding:i+padding+1, j-padding:j+padding+1]
             output[i-padding, j-padding] = np.sum(np.multiply(temp, kernel))
     output = np.clip(output, 0, 255)
