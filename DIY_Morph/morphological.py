@@ -1,5 +1,3 @@
-# rectangle and elliptical kernel kaj kore khali, cross kernel kaj kore na keno jani
-
 import cv2, matplotlib.pyplot as plt, numpy as np
 
 def myOpen(src, kernel):
@@ -31,7 +29,7 @@ def myErode(src, kernel):
         for j in range(pad, src.shape[1] - pad):
             temp = src[i-pad:i+pad+1, j-pad:j+pad+1]
             
-            output[i,j] = np.min(temp * kernel)
+            output[i,j] = 255 if ((kernel * temp)/255 == kernel).all() else 0
     return output
 
 image = cv2.imread('./image.jpg', 0)
