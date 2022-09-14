@@ -1,62 +1,56 @@
-import cv2, matplotlib.pyplot as plt, numpy as np
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
 
-def myOpen(src, kernel):
-    temp = myErode(src, kernel)
-    temp = myDilate(temp, kernel)
-    return temp
-
-def myClose(src, kernel):
-    temp = myDilate(src, kernel)
-    temp = myErode(temp, kernel)
-    return temp
-
-def myDilate(src, kernel):
-    output = np.zeros(src.shape, np.uint8)
+def dilation(source, kernel):
     k = kernel.shape[0]
-    pad = (k-1)//2
-    for i in range(pad, src.shape[0] - pad):
-        for j in range(pad, src.shape[1] - pad):
-            temp = src[i-pad:i+pad+1, j-pad:j+pad+1]
-            output[i, j] = np.max(temp * kernel)
-    return output
-
-def myErode(src, kernel):
-    output = np.zeros(src.shape, np.uint8)
-    k = kernel.shape[0]
+    output = np.zeros(source.shape, source.dtype)
     pad = (k-1)//2
 
-    for i in range(pad, src.shape[0] - pad):
-        for j in range(pad, src.shape[1] - pad):
-            temp = src[i-pad:i+pad+1, j-pad:j+pad+1]
-            
-            output[i,j] = 255 if ((kernel * temp)/255 == kernel).all() else 0
+    for i in range(pad, source.shape[0] - pad):
+        for j in range(pad, source.shape[1] - pad):
+            temp = source[i-pad:i+pad+1, j-pad:j+pad+1]
+            output[i, j] = (temp * kernel).max()
     return output
 
-image = cv2.imread('./image.jpg', 0)
+def erosion(source, kernel):
+    k = kernel.shape[0]
+    output = np.zeros(source.shape, source.dtype)
+    pad = (k-1)//2
+
+    for i in range(pad, source.shape[0] - pad):
+        for j in range(pad, source.shape[1] - pad):
+            temp = source[i-pad:i+pad+1, j-pad:j+pad+1]
+            output[i, j] = 255 if ((temp * kernel)/255 == kernel).all() else 0
+    return output
+
+def open(source, kernel):
+    temp = erosion(source, kernel)
+    temp = dilation(temp, kernel)
+    return temp
+
+def close(source, kernel):
+    temp = dilation(source, kernel)
+    temp = erosion(temp, kernel)
+    return temp
+
+image = cv2.imread('./image.jpg', cv2.IMREAD_GRAYSCALE)
 _, binary = cv2.threshold(image, 100, 255, cv2.THRESH_BINARY)
+kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3,3))
 
+md = dilation(binary, kernel)
+cd = cv2.dilate(binary, kernel)
+me = erosion(binary, kernel)
+ce = cv2.erode(binary, kernel)
+mo = open(binary, kernel)
+mc = close(binary, kernel)
+co = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
+cc = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
 
-kernel = np.array([
-    [1, 1, 1],
-    [1, 1, 1],
-    [1, 1, 1]
-])
-# kernel = cv2.getStructuringElement(cv2.MORPH_CROSS, (3,3))
-# open cv er builtin diye test korte ei line lage. Otherwise array er moto korlei hoppe.
-dilated = myDilate(binary, kernel)
-eroded = myErode(binary, kernel)
-opened = myOpen(binary, kernel)
-closed = myClose(binary, kernel)
+outset = [binary, md, cd, me, ce, mo, co, mc, cc]
 
-# cv_d = cv2.dilate(binary, kernel)
-# cv_e = cv2.erode(binary, kernel)
-# cv_op = cv2.morphologyEx(binary, cv2.MORPH_OPEN, kernel)
-# cv_cl = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
-
-output_set = [dilated, eroded, opened, closed] #, cv_d, cv_e, cv_op, cv_cl]
-
-for i in range(len(output_set)):
-    plt.subplot(2, 4, i + 1)
-    plt.imshow(output_set[i], 'gray')
+for i in range(len(outset)):
+    plt.subplot(3, 3, i + 1)
+    plt.imshow(outset[i], 'gray')
 
 plt.show()
